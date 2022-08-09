@@ -31,12 +31,11 @@ class getYoutubeData extends Command
      */
     public function handle()
     {
-        $apikey = '';
+        $apikey = env('YOUTUBE_API_KEY');
         $client = new Google_Client();
         $client->setApplicationName("youtube-api-test");
         $client->setDeveloperKey($apikey);
         $youtube = new Google_Service_YouTube($client);
-
 
         //動画の取得
         // $params['channelId'] = '';
@@ -56,28 +55,30 @@ class getYoutubeData extends Command
         //     $videos[] = $search_result;
         // }
 
-        $res = fopen('', 'w');
-        $header = ["日付", "ユーザー名", "コメント","返信数","いいね"];
+        $res = fopen(env('LOCAL_DIR'), 'w');
+        $header = ["日付", "ユーザー名", "コメント", "返信数", "いいね"];
         fputcsv($res, $header);
         $nextPageToken = NULL;
-        while(true){
+        while (true) {
             $comments = $youtube->commentThreads->listCommentThreads('snippet,replies', array(
-                'videoId' => '',
+                'videoId' => 'qrFdhYGcfw0',
                 'textFormat' => 'plainText',
                 'pageToken' => $nextPageToken,
                 'maxResults' => 100,
             ));
             for ($i = 0; $i < 100; $i++) {
                 $arr = array();
-                $arr[] = $comments[$i]['snippet']['topLevelComment']['snippet']['updatedAt'];
-                $arr[] = $comments[$i]['snippet']['topLevelComment']['snippet']['authorDisplayName'];
-                $arr[] = $comments[$i]['snippet']['topLevelComment']['snippet']['textDisplay'];
-                $arr[] = $comments[$i]['snippet']['topLevelComment']['snippet']['totalReplyCount'];
-                $arr[] = $comments[$i]['snippet']['topLevelComment']['snippet']['likeCount'];
+                if (isset($comments[$i])) {
+                    $arr[] = $comments[$i]['snippet']['topLevelComment']['snippet']['updatedAt'];
+                    $arr[] = $comments[$i]['snippet']['topLevelComment']['snippet']['authorDisplayName'];
+                    $arr[] = $comments[$i]['snippet']['topLevelComment']['snippet']['textDisplay'];
+                    $arr[] = $comments[$i]['snippet']['topLevelComment']['snippet']['totalReplyCount'];
+                    $arr[] = $comments[$i]['snippet']['topLevelComment']['snippet']['likeCount'];
+                }
                 fputcsv($res, $arr);
             }
             $nextPageToken = $comments['nextPageToken'];
-            if($nextPageToken==NULL){
+            if ($nextPageToken == NULL) {
                 break;
             }
         }
